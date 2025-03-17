@@ -46,8 +46,10 @@ export async function processCameraFrame(base64ImageData) {
     inputCanvas.height = img.height;
     inputCtx.drawImage(img, 0, 0);
 
+    const lastTimestamp = performance.now()
     const result = await selfieSegmentation.segment(inputCanvas);
-    
+    const inferenceTime = (performance.now() - lastTimestamp)
+
     maskCanvas.width = result.categoryMask.width;
     maskCanvas.height = result.categoryMask.height;
 
@@ -57,7 +59,7 @@ export async function processCameraFrame(base64ImageData) {
     const maskBase64 = uint8ToBase64(maskArray);
 
     if (window.Android && Android.onMaskReady) {
-      Android.onMaskReady(maskBase64, width, height);
+      Android.onMaskReady(maskBase64, width, height, inferenceTime);
     }
   };
 
