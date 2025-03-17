@@ -14,7 +14,7 @@ export async function initSegmenter() {
       selfieSegmentation = await ImageSegmenter.createFromOptions(audio, {
         baseOptions: {
           modelAssetPath:
-            "/models/deeplab_v3.tflite",
+            "/mediapipe-webview1/models/deeplab_v3.tflite",
           delegate: "GPU"
         },
         runningMode: "IMAGE",
@@ -24,6 +24,15 @@ export async function initSegmenter() {
 
       console.warn('Selfie segmenter initialized.');
 }
+
+function uint8ToBase64(uint8Array) {
+  let binary = '';
+  for (let i = 0; i < uint8Array.length; i++) {
+    binary += String.fromCharCode(uint8Array[i]);
+  }
+  return btoa(binary);
+}
+
 
 export async function processCameraFrame(base64ImageData) {
   if (!selfieSegmentation) {
@@ -38,18 +47,14 @@ export async function processCameraFrame(base64ImageData) {
     inputCtx.drawImage(img, 0, 0);
 
     const result = await selfieSegmentation.segment(inputCanvas);
-
-
+    
     maskCanvas.width = result.categoryMask.width;
     maskCanvas.height = result.categoryMask.height;
 
     const { width, height } = result.categoryMask;
-
     const maskArray = result.categoryMask.getAsUint8Array();
 
-    // Convert Uint8Array to base64
-    const binaryString = String.fromCharCode(...maskArray);
-    const maskBase64 = btoa(binaryString);
+    const maskBase64 = uint8ToBase64(maskArray);
 
     if (window.Android && Android.onMaskReady) {
       Android.onMaskReady(maskBase64, width, height);
